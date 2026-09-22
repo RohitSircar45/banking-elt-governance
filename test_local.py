@@ -1,19 +1,29 @@
-import pandas as pd
-from env import ELTBenchEnv
+from elt_bench.env import ELTBenchEnv
+from elt_bench.tasks.banking_elt import get_banking_task_data
 
-# 1. Define dummy input source data (Orders)
-sources = {"orders": pd.DataFrame({"user_id": [1, 2, 1], "amount": [50.0, 250.0, 50.0]})}
+# 1. Load Banking Financial Data Task
+sources, targets = get_banking_task_data()
 
-# 2. Define expected output target data (User Summaries)
-targets = {"user_summary": pd.DataFrame({"user_id": [1, 2], "total_spent": [100.0, 250.0]})}
-
-# 3. Start the environment
+# 2. Start the environment
 env = ELTBenchEnv(sources, targets)
 env.reset()
 
-# 4. Simulate a correct SQL command written by the AI model
-env.step("CREATE TABLE user_summary AS SELECT user_id, SUM(amount) AS total_spent FROM raw_orders GROUP BY user_id")
+# 3. Simulate SQL written by an AI model to build daily_customer_summary
+query = """
+CREATE TABLE daily_customer_summary AS 
+SELECT 
+    account_id, 
+    txn_date, 
+    SUM(amount) AS total_spend, 
+    COUNT(*) AS txn_count
+FROM raw_transactions
+WHERE status = 'COMPLETED'
+GROUP BY account_id, txn_date
+ORDER BY account_id, txn_date;
+"""
 
-# 5. Grade the submission
+env.step(query)
+
+# 4. Grade the submission
 reward = env.submit()
-print(f"Integration Test Reward: {reward}")
+print(f"Banking Transformation Task Reward: {reward}")

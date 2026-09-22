@@ -1,5 +1,5 @@
 import duckdb
-from verifier import verify_elt_pipeline
+from .verifier import verify_elt_pipeline
 
 class ELTBenchEnv:
     def __init__(self, source_data: dict, target_data: dict):
